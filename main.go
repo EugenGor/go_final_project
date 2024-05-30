@@ -9,7 +9,7 @@ import (
 	"go_final_project/packages/config"
 	"go_final_project/packages/db"
 	"go_final_project/packages/handlers"
-	"go_final_project/packages/repp"
+	"go_final_project/packages/tasks_repository"
 
 	"github.com/go-chi/chi/v5"
 	_ "modernc.org/sqlite"
@@ -34,7 +34,7 @@ func main() {
 		log.Println(err)
 		return
 	}
-	tRepository := repp.NewTasksRepository(db)
+	tRepository := tasks_repository.NewTasksRepository(db)
 
 	api := handlers.NewApi(&tRepository, config)
 

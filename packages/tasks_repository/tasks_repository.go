@@ -1,4 +1,4 @@
-package repp
+package tasks_repository
 
 import (
 	"database/sql"
@@ -8,6 +8,10 @@ import (
 
 	"go_final_project/packages/dateparser"
 	"go_final_project/packages/models"
+)
+
+const (
+	limitConst = 20
 )
 
 // структура для работы с Tasks
@@ -27,7 +31,7 @@ func (tr TasksRepository) AddTask(t models.Task) (int, error) {
 		sql.Named("repeat", t.Repeat))
 
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to add task to the database: %w", err)
 	}
 
 	id, err := task.LastInsertId()
@@ -105,7 +109,6 @@ func (tr TasksRepository) GetTask(id int) (models.Task, error) {
 
 // Возвращаем сроки с ближайшими датами.
 func (tr TasksRepository) GetAllTasks() ([]models.Task, error) {
-	limitConst := 20
 	today := time.Now().Format("20060102")
 
 	rows, err := tr.db.Query("select * from scheduler where date >= :today "+
@@ -128,6 +131,10 @@ func (tr TasksRepository) GetAllTasks() ([]models.Task, error) {
 			return nil, err
 		}
 		result = append(result, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return result, nil
@@ -205,6 +212,9 @@ func (tr TasksRepository) SearchTasks(searchData SearchQueryData) ([]models.Task
 			return nil, err
 		}
 		result = append(result, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return result, nil
 }

@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-
-	_ "modernc.org/sqlite"
 )
 
 func checkFileExists(dbFile string) bool {

@@ -13,7 +13,7 @@ import (
 	"go_final_project/packages/config"
 	"go_final_project/packages/dateparser"
 	"go_final_project/packages/models"
-	"go_final_project/packages/repp"
+	"go_final_project/packages/tasks_repository"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
@@ -135,18 +135,18 @@ func GetNextDay(w http.ResponseWriter, r *http.Request) {
 func WriteResponse(w http.ResponseWriter, s []byte) {
 	_, err := w.Write(s)
 	if err != nil {
-		log.Fatalf("Can not write response: %s", err.Error())
+		log.Printf("Can not write response: %s", err.Error())
 	}
 }
 
 // Api структурой для работы с API
 type Api struct {
-	repp   *repp.TasksRepository
+	repp   *tasks_repository.TasksRepository
 	config *config.Config
 }
 
 // NewApi конструктор объекта api.
-func NewApi(repp *repp.TasksRepository, config *config.Config) *Api {
+func NewApi(repp *tasks_repository.TasksRepository, config *config.Config) *Api {
 	// создаем ссылку на объект api
 	return &Api{repp: repp, config: config}
 }
@@ -232,14 +232,14 @@ func (a *Api) GetAllTasks(w http.ResponseWriter) {
 	_, err = w.Write(resp)
 	if err != nil {
 		log.Println("error:", err)
-		RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
+		//RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
 		return
 	}
 }
 
 // ищем задачу согласно search из GetTasksHandler
 func (a *Api) SearchTasks(w http.ResponseWriter, r *http.Request, search string) {
-	foundTasks, err := a.repp.SearchTasks(repp.QueryDataFromString(search))
+	foundTasks, err := a.repp.SearchTasks(tasks_repository.QueryDataFromString(search))
 	if err != nil {
 		log.Println("error:", err)
 		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
@@ -262,7 +262,7 @@ func (a *Api) SearchTasks(w http.ResponseWriter, r *http.Request, search string)
 	_, err = w.Write(resp)
 	if err != nil {
 		log.Println("error:", err)
-		RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
+		//RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
 		return
 	}
 }
@@ -273,7 +273,7 @@ func (a *Api) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/CreateTask. Occurred while reading request body:", err)
 		RenderApiError(w, fmt.Errorf(ReadingError), http.StatusBadRequest)
 		return
 	}
@@ -282,21 +282,21 @@ func (a *Api) CreateTask(w http.ResponseWriter, r *http.Request) {
 	parseBody := models.Task{}
 	err = json.Unmarshal(buf.Bytes(), &parseBody)
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/CreateTask Tasks:", err)
 		RenderApiError(w, fmt.Errorf(UnMarshallingError), http.StatusBadRequest)
 		return
 	}
 
 	err = parseBody.CheckingAndNormalizeDate()
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/CreateTask CheckingAndNormalizeDate:", err)
 		RenderApiError(w, fmt.Errorf(ValidatingDateError), http.StatusBadRequest)
 		return
 	}
 
 	id, err := a.repp.AddTask(parseBody)
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/CreateTask AddTask:", err)
 		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -312,7 +312,7 @@ func (a *Api) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/UpdateTask. Occurred while reading request body::", err)
 		RenderApiError(w, fmt.Errorf(ReadingError), http.StatusBadRequest)
 		return
 	}
@@ -320,41 +320,41 @@ func (a *Api) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	parseBody := models.Task{}
 	err = json.Unmarshal(buf.Bytes(), &parseBody)
 	if err != nil {
-		log.Println("err:", err)
+		log.Println("err in handlers/UpdateTask Task:", err)
 		RenderApiError(w, fmt.Errorf(UnMarshallingError), http.StatusBadRequest)
 		return
 	}
 
 	err = parseBody.CheckingAndNormalizeDate()
 	if err != nil {
-		log.Println("error:", err)
+		log.Println("err in handlers/UpdateTask CheckingAndNormalizeDate:", err)
 		RenderApiError(w, fmt.Errorf(ValidatingDateError), http.StatusBadRequest)
 		return
 	}
 	idToSearch, err := strconv.Atoi(parseBody.ID)
 	if err != nil {
-		log.Println("error:", err)
+		log.Println("err in handlers/UpdateTask idToSearch:", err)
 		RenderApiError(w, fmt.Errorf(InvalidIdError), http.StatusBadRequest)
 		return
 	}
 
 	_, err = a.repp.GetTask(idToSearch)
 	if err != nil {
-		log.Println("error:", err)
+		log.Println("err in handlers/UpdateTask GetTask:", err)
 		RenderApiError(w, fmt.Errorf(InvalidIdError), http.StatusBadRequest)
 		return
 	}
 
 	err = a.repp.UpdateTaskInBd(parseBody)
 	if err != nil {
-		log.Println("error:", err)
+		log.Println("err in handlers/UpdateTask UpdateTaskInBd:", err)
 		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	jsonItem, err := json.Marshal(parseBody)
 	if err != nil {
-		log.Println("error:", err)
+		log.Println("err in handlers/UpdateTask jsonItem:", err)
 		RenderApiError(w, fmt.Errorf(MarshallingError), http.StatusBadRequest)
 		return
 	}
@@ -409,14 +409,15 @@ func (a *Api) TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newTask, err := a.repp.PostTaskDone(id)
-	if newTask == nil {
-		w.WriteHeader(http.StatusOK)
-		WriteResponse(w, []byte("{}"))
-		return
-	}
+
 	if err != nil {
 		log.Println("error:", err)
 		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if newTask == nil {
+		w.WriteHeader(http.StatusOK)
+		WriteResponse(w, []byte("{}"))
 		return
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -453,7 +454,7 @@ func (a *Api) GetTask(w http.ResponseWriter, r *http.Request, id int) {
 	_, err = w.Write(resp)
 	if err != nil {
 		log.Println("error:", err)
-		RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
+		//RenderApiError(w, fmt.Errorf(ResponseWriteError), http.StatusBadRequest)
 		return
 	}
 }
