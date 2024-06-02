@@ -410,20 +410,22 @@ func (a *Api) TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	newTask, err := a.repp.PostTaskDone(id)
 
-	if err != nil {
-		log.Println("error:", err)
-		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
-		return
-	}
 	if newTask == nil {
 		w.WriteHeader(http.StatusOK)
 		WriteResponse(w, []byte("{}"))
+		return
+	}
+
+	if err != nil {
+		log.Println("error:", err)
+		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError) // 500
 		return
 	} else {
 		w.WriteHeader(http.StatusOK)
 		WriteResponse(w, []byte("{}"))
 		return
 	}
+
 }
 
 /*
