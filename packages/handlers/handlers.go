@@ -418,14 +418,9 @@ func (a *Api) TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println("error:", err)
-		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError) // 500
+		RenderApiError(w, fmt.Errorf(InternalServerError), http.StatusInternalServerError)
 		return
-	} else {
-		w.WriteHeader(http.StatusOK)
-		WriteResponse(w, []byte("{}"))
-		return
-	}
-
+	} 
 }
 
 /*
